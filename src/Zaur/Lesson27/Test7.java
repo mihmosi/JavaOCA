@@ -24,9 +24,10 @@ public class Test7 {
             }
         }
         catch (FileNotFoundException e) {
-            System.out.println("Exception 1");
+            System.out.println("Exception 1"+ e);
+
         } catch (IOException a) {
-            System.out.println("Exception 2");
+            System.out.println("Exception 2"+ a);
         } finally {
             System.out.println("Eto finally");
             System.out.println(result);
