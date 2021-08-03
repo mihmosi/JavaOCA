@@ -95,7 +95,7 @@ public class PostTest {
             this.content = content;
         }
 
-        public Package getContent() {
+        public Package getContent() {     //ссылка на тип еласса Package
             return content;
         }
 
@@ -155,8 +155,8 @@ public class PostTest {
         Sendable processMail(Sendable mail);
     }
 
-    /** ========================================================================== */
-    /**
+    /* ========================================================================== */
+    /*
      * Класс, в котором скрыта логика настоящей почты
      */
     public static class RealMailService implements MailService {
@@ -167,7 +167,8 @@ public class PostTest {
         }
     }
 
-    /**
+
+    /*
      * Вам необходимо описать набор классов, каждый из которых является MailService:
      * <p>
      * 1) UntrustworthyMailWorker – класс, моделирующий ненадежного работника почты, который вместо того,
@@ -181,20 +182,28 @@ public class PostTest {
 
     public static class UntrustworthyMailWorker implements MailService {
 
-        public UntrustworthyMailWorker() {
-        }
+        protected final MailService[] mailServices;
+        protected final RealMailService innerInstanceRealMailService;
 
-        public String getRealMailService() {
-            return null;
+        public UntrustworthyMailWorker(MailService[] mailServices) {
+            this.mailServices = mailServices;
+            this.innerInstanceRealMailService = new RealMailService();
         }
 
         @Override
-        public Sendable processMail(Sendable mail) {   /***/
-            return null;
+        public Sendable processMail(Sendable mail) {
+            for (MailService mailService : mailServices) {
+                mail = mailService.processMail(mail);
+            }
+            return innerInstanceRealMailService.processMail(mail);
+        }
+
+        public MailService getRealMailService() {        // getRealMailService, который возвращает ссылку на внутренний
+            return this.innerInstanceRealMailService;                                   // экземпляр RealMailService
         }
     }
 
-    /**
+    /*
      * ==========================================================================
      * 2) Spy – шпион, который логгирует о всей почтовой переписке, которая проходит через его руки.
      * Объект конструируется от экземпляра Logger, с помощью которого шпион будет сообщать о всех
@@ -206,10 +215,25 @@ public class PostTest {
      */
 
     public static class Spy implements MailService {
+        private Logger spyLogger;
+
+        public Spy(Logger spyLogger) {
+
+            this.spyLogger = spyLogger;
+        }
 
         @Override
         public Sendable processMail(Sendable mail) {
-            return null;
+            if (mail instanceof MailMessage) {
+                if (mail.getFrom().equals(AUSTIN_POWERS) || mail.getTo().equals(AUSTIN_POWERS)) {
+                    spyLogger.log(Level.WARNING, "Detected target mail correspondence: from {0} to {1} \"{2}\"",
+                            new Object[]{mail.getFrom(), mail.getTo(), ((MailMessage) mail).getMessage()});
+                } else {
+                    spyLogger.log(Level.INFO, "Usual correspondence: from {0} to {1}",
+                            new Object[]{mail.getFrom(), mail.getTo()});
+                }
+            }
+            return mail;
         }
     }
 
@@ -224,26 +248,36 @@ public class PostTest {
      */
 
     public static class Thief implements MailService {
+        private static int StolenPrice;
+        private static int MinValue;
 
-        public Thief(int MIN) {
-            this.MIN = MIN;
+        public Thief(int m) {
+            this.MinValue = m;
         }
-
-        int MIN;
 
         public int getStolenValue() {
-            int sum = 0;
-
-            return sum;
+            return StolenPrice;
         }
+
+        MailPackage mailPackage;
 
         @Override
         public Sendable processMail(Sendable mail) {
-            return null;
+            if (mail instanceof MailPackage) {
+                if (((MailPackage) mail).getContent().getPrice() >= MinValue) {
+                    StolenPrice += ((MailPackage) mail).getContent().getPrice();
+                    return new MailPackage(mail.getFrom(), mail.getTo(),
+                            new Package("stones instead of " + (((MailPackage) mail)
+                                    .getContent().getContent()), 0));
+                } else {
+                    return mail;
+                }
+            }
+            return mail;
         }
     }
 
-    /**
+    /*
      * ==========================================================================
      * 4) Inspector – Инспектор, который следит за запрещенными и украденными посылками и бьет тревогу
      * в виде исключения, если была обнаружена подобная посылка. Если он заметил запрещенную посылку
@@ -254,18 +288,151 @@ public class PostTest {
 
     public static class Inspector implements MailService {
 
+//        MailPackage mailPackage = (MailPackage) mail; // приводим тип Sendable к MailPackage
+//        Package package = mailPackage.getContent(); // получаем саму посылку из ее обертки
+//        String packageContent = package.getContent(); // получаем ее содержимое
+//          (MailPackage) mail).getContent().getContent()
+
+        String mailContent;
+
         @Override
         public Sendable processMail(Sendable mail) {
-            return null;
+            if (mail instanceof MailPackage) {
+                mailContent = (((MailPackage) mail).getContent().getContent());
+                if (mailContent.contains(WEAPONS) || mailContent.contains(BANNED_SUBSTANCE)) {
+                    throw new IllegalPackageException();
+                } else if (mailContent.contains("stones")) {
+                    throw new StolenPackageException();
+                }
+            }
+            return mail;
+        }
+
+
+    }
+
+    /*
+     * ===================== КЛАССЫ ИСКЛЮЧЕНИЙ ====================================================
+     */
+    public static class StolenPackageException extends RuntimeException {
+        public StolenPackageException() {
         }
     }
 
-/** ==========================================================================
- *Все классы должны быть определены как публичные и статические, так как в процессе проверки
- * ваш код будет подставлен во внешний класс, который занимается тестированием и проверкой
- * структуры. Для удобства во внешнем классе объявлено несколько удобных констант и импортировано
- * все содержимое пакета java.util.logging. Для определения, посылкой или письмом является
- * Sendable объект воспользуйтесь оператором instanceof. */
+    public static class IllegalPackageException extends RuntimeException {
+        public IllegalPackageException() {
+        }
+    }
 
-/** ========================================================================== */
+    /* ==========================================================================
+     *Все классы должны быть определены как публичные и статические, так как в процессе проверки
+     * ваш код будет подставлен во внешний класс, который занимается тестированием и проверкой
+     * структуры. Для удобства во внешнем классе объявлено несколько удобных констант и импортировано
+     * все содержимое пакета java.util.logging. Для определения, посылкой или письмом является
+     * Sendable объект воспользуйтесь оператором instanceof. */
+
+    /** =============== ДАЛЕЕ То ЧТО ПРОШЛО ТЕСТ =========================================================== */
 }
+//
+//public static class UntrustworthyMailWorker implements PostTest.MailService {
+//
+//    private final PostTest.RealMailService realService = new PostTest.RealMailService();
+//    private final PostTest.MailService[] mServices;
+//
+//    public UntrustworthyMailWorker(PostTest.MailService[] mServices) {
+//        this.mServices = mServices;
+//    }
+//
+//    public PostTest.MailService getRealMailService() {
+//        return realService;
+//    }
+//
+//    @Override
+//    public PostTest.Sendable processMail(PostTest.Sendable mail) {
+//        for (PostTest.MailService mailWorker : mServices) {
+//            mail = mailWorker.processMail(mail);
+//        }
+//        return realService.processMail(mail);
+//    }
+//}
+//
+//public static class Spy implements PostTest.MailService {
+//    private Logger logger;
+//
+//    public Spy(Logger logger) {
+//        this.logger = logger;
+//    }
+//
+//    @Override
+//    public PostTest.Sendable processMail(PostTest.Sendable mail) {
+//        if (mail instanceof PostTest.MailMessage) {
+//            if (mail.getFrom().equals(AUSTIN_POWERS) || mail.getTo().equals(AUSTIN_POWERS)) {
+//                logger.log(Level.WARNING, "Detected target mail correspondence: from {0} to {1} \"{2}\"",
+//                        new Object[]{mail.getFrom(), mail.getTo(), ((PostTest.MailMessage) mail).getMessage()});
+//            } else {
+//                logger.log(Level.INFO, "Usual correspondence: from {0} to {1}",
+//                        new Object[]{mail.getFrom(), mail.getTo()});
+//            }
+//        }
+//        return mail;
+//    }
+//}
+//
+//public static class Thief implements PostTest.MailService {
+//    private final int price;
+//    private int StolenValue;
+//
+//    public Thief(int price) {
+//        this.price = price;
+//    }
+//
+//    @Override
+//    public PostTest.Sendable processMail(PostTest.Sendable mail) {
+//
+//        if (mail instanceof PostTest.MailPackage) {
+//            PostTest.MailPackage mailPackage = (PostTest.MailPackage) mail;
+//
+//            if (mailPackage.getContent().getPrice() >= price) {
+//                StolenValue += mailPackage.getContent().getPrice();
+//                return new PostTest.MailPackage(mailPackage.getFrom(),
+//                        mailPackage.getTo(),
+//                        new PostTest.Package("stones instead of " +
+//                                mailPackage.getContent().getContent(),
+//                                0));
+//            }
+//        }
+//        return mail;
+//    }
+//
+//    public int getStolenValue() {
+//        return StolenValue;
+//    }
+//}
+//
+//public static class Inspector implements PostTest.MailService {
+//
+//    String mailContent;
+//
+//    @Override
+//    public PostTest.Sendable processMail(PostTest.Sendable mail) {
+//        if (mail instanceof PostTest.MailPackage) {
+//            mailContent = (((PostTest.MailPackage) mail).getContent().getContent());
+//            if (mailContent.contains(WEAPONS) || mailContent.contains(BANNED_SUBSTANCE)) {
+//                throw new PostTest.IllegalPackageException();
+//            } else if (mailContent.contains("stones")) {
+//                throw new PostTest.StolenPackageException();
+//            }
+//        }
+//        return mail;
+//    }
+//}
+//
+//public static class StolenPackageException extends RuntimeException {
+//    public StolenPackageException() {
+//    }
+//}
+//
+//public static class IllegalPackageException extends RuntimeException {
+//    public IllegalPackageException() {
+//    }
+//}
