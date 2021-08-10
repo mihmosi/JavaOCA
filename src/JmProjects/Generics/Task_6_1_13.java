@@ -10,24 +10,21 @@ import java.util.Arrays;
     Для возможности работы с различными классами DynamicArray должен быть дженериком.
 Для решения задачи можно воспользоваться методами из класса java.util.Arrays.
  Импорт этого класса уже объявлен в тестирующей системе. Добавлять его явно не нужно */
+/*почему массив не закрыт, кодстайл, умножай на 2, в remove добавь декремент */
 public class Task_6_1_13 {
     public static class DynamicArray<T> {
         int size = 0;
-        T[] arr = (T[]) new Object[size]; // который хранит в себе массив
+        private T[] arr = (T[]) new Object[size];
 
-
-        // методы для добавления el в массив
         public void add(T el) {
             arr = Arrays.copyOf(arr, arr.length + 1);
-            arr[size++] = el;
+            arr[arr.length-1] = el;
         }
 
-        // методы для удаления
         public void remove(int removedIdx) {
             System.arraycopy(arr, removedIdx + 1, arr, removedIdx, (arr.length - 1) - removedIdx);
         }
 
-        // методы для извлечения
         public T get(int index) {
             return arr[index];
         }
