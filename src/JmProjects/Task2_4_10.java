@@ -1,4 +1,4 @@
-package day0.JmProjects;
+package JmProjects;
 
 public class Task2_4_10 {
 

@@ -1,4 +1,4 @@
-package day0.JmProjects;
+package JmProjects;
 
 import java.util.Arrays;
 
