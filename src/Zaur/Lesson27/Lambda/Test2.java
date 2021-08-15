@@ -6,9 +6,14 @@ public class Test2 {
     }
 
     public static void main(String[] args) {
+        final int i = 10;
+//        i = 15; изменять нельзя
         def((String str) -> {
-            return str.length();
+            int a = 5;
+            System.out.println(i);
+            return str.length() + i;
         });
+
     }
 }
 

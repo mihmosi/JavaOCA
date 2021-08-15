@@ -1,12 +1,17 @@
 package Zaur.Lesson27.Lambda;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.function.Function;
 
 public class StudentInfo {
-
-    void testStudents(ArrayList<Student> a1, StudentCheks sc) {
+    //Второй параметр метода выводящего в консоль элементы соответствующие условиям лямбды-
+    void testStudents(ArrayList<Student> a1, Predicate<Student> pr) {
         for (Student s : a1) {
-            if (sc.check(s)) {
+            if (pr.test(s)) {
                 System.out.println(s);
             }
         }
@@ -43,7 +48,7 @@ class Test {
         Student st2 = new Student("Nikolay", 'm', 28, 2, 6.4);
         Student st3 = new Student("Elenq", 'f', 19, 1, 8.9);
         Student st4 = new Student("Petr", 'm', 35, 4, 7);
-        Student st5 = new Student("Mariya", 'f', 23, 3, 9.1);
+        Student st5 = new Student("Mariya", 'f', 23, 3, 7.4);
 
         ArrayList<Student> students = new ArrayList<>();
         students.add(st1);
@@ -53,6 +58,14 @@ class Test {
         students.add(st5);
 
         StudentInfo info = new StudentInfo();
+//        Collections.sort(students, new Comparator<Student>() {
+//            @Override
+//            public int compare(Student s1, Student s2) {
+//                return s1.course - s2.course;
+//            }
+//        });
+//        Collections.sort(students, Comparator.comparingInt(s -> s.age));
+//        System.out.println(students);
 //        info.testStudents(students, new CheckOverGrade());
 //        System.out.println("================");
 //        info.testStudents(students, new StudentCheks() {
@@ -61,16 +74,24 @@ class Test {
 //                return s.age < 30;
 //            }
 //        });
-        info.testStudents(students, (Student s) -> {
-            return s.averGrade > 8;
-        });
-        info.testStudents(students, p -> p.averGrade > 8);
-        System.out.println("================");
-        info.testStudents(students, (Student s) -> {
-            return s.age < 30;
-        });
-        System.out.println("================");
-        info.testStudents(students, s -> (s.age > 20 && s.averGrade < 9.3 && s.sex == 'f'));
+//        info.testStudents(students, (Student s) -> {
+//            return s.averGrade > 8;
+//        });
+//        //самый короткий способ написания  лямбда-выражения
+//        info.testStudents(students, p -> p.averGrade > 8);
+
+//        Predicate<Student> p1 = student -> student.averGrade > 7.5;
+//        Predicate<Student> p2 = student -> student.sex == 'm';
+//
+//        info.testStudents(students, p1.negate());
+//
+//        System.out.println("================");
+//        info.testStudents(students, (Student s) -> {
+//            System.out.println("Hello!");
+//            return s.age < 30;
+//        });
+//        System.out.println("================");
+//        info.testStudents(students, s -> (s.age > 20 && s.averGrade < 9.3 && s.sex == 'f'));
 /*
         info.printStudensOverGrade(students, 8);
         System.out.println("================================");
@@ -78,12 +99,29 @@ class Test {
         System.out.println("=====================================");
         info.printStudentsMixCondition(students, 20, 9.5, 'f');
 */
+
+        Function<Student, Double> f = student -> student.averGrade;
+        //вызываем метод  принимаем list описываем функцию метод apply()
+        double res = averageOfAny(students, student -> (double) student.age);
+        System.out.println(res);
+
+    }
+
+    // принимает st    возвращает apply()
+    private static double averageOfAny(List<Student> list, Function<Student, Double> function) {
+        double result = 0;
+        for (Student st : list) {
+            // у функц. интерфейса  есть метод apply()
+            result += function.apply(st);
+        }
+        result = result / list.size();
+        return result;
     }
 }
-
-interface StudentCheks {
-    boolean check(Student s);
-}
+// Это функциональный интерфейс, имеющий один абстрактный метод
+//interface StudentCheks {
+//    boolean check(Student s);  // который возвращает boolean
+//}
 
 //class CheckOverGrade implements StudentCheks {
 //
