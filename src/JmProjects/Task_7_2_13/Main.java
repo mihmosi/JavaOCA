@@ -81,45 +81,43 @@
 //     */
 //    public static class MailService<T> implements Consumer<Sendable<T>> {
 //
-//        private static class MailHashMap<K, V> extends HashMap<K, V> {
+//        private Map<String, List<T>> messagesMap = new HashMap<>() {
 //            @Override
-//            public V get(Object key) {
-//                V temp = super.get(key);
-//                try {
-//                    if (temp == null) {
-//                        return (V) Collections.emptyList();
-//                    }
-//                } catch (ClassCastException e) {
-//                }
-//                return temp;
-//
+//            public List<T> get(Object key) {
+//                return super.get(getOrDefault(key, Collections.emptyList()));
+////                if (this.containsKey(key)) {
+//                    // Возвращать изменяемый список во внешний мир – не очень хорошая идея
+//                    // по причине того, что его изменение может испортить внутреннее состояние
+//                    // словаря. Лучше оборачивать подобный вывод в
+//                    //  Collections.unmodifiableList.
+//                    // Однако здесь мы не можем так поступить по причине того,
+//                    // что добавлять новые элементы в списки из accept будет неудобно.
+//                    // Нужно реализовать дополнительный метод getMutable, который возвращал
+//                    // бы изменяемый список, удобный для модификации.
+//                    // Но добавить новый метод мы можем только в именованный класс.
+////                    return super.get(key);
+////                } else {
+//                    // Collections.emptyList() возвращает один и тот же экземпляр
+//                    // неизменяемого списка. Если бы мы возвращали здесь, допустим,
+//                    // new ArrayList<>(), то множество вызовов get по отсутвующему
+//                    // элементу создавало бы множество лишних объектов.
+////                    return Collections.emptyList();
+////                }
 //            }
-//
-//        }
-//
-//        private Map<String, List<T>> mailBox;
-//
-//        public MailService() {
-//            mailBox = new MailHashMap();
-//        }
+//        };
 //
 //        @Override
-//        public void accept(Sendable<T> tSendable) {
-//            if (mailBox.containsKey(tSendable.getTo())) {
-//                List<T> val;
-//                val = mailBox.get(tSendable.getTo());
-//                val.add(tSendable.getContent());
-//                mailBox.put(tSendable.getTo(), val);
-//            } else {
-//                List<T> val;
-//                val = new LinkedList<>();
-//                val.add(tSendable.getContent());
-//                mailBox.put(tSendable.getTo(), val);
+//        public void accept(Sendable<T> sendable) {
+//            List<T> ts = messagesMap.get(sendable.getTo());
+//            if (ts.size() == 0) {
+//                ts = new ArrayList<>();
 //            }
+//            ts.add(sendable.getContent());
+//            messagesMap.put(sendable.getTo(), ts);
 //        }
 //
 //        public Map<String, List<T>> getMailBox() {
-//            return mailBox;
+//            return messagesMap;
 //        }
 //
 //    }

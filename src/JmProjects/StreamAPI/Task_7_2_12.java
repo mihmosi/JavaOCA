@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /*Напишите программу, читающую из System.in текст в кодировке UTF-8,
@@ -38,29 +40,37 @@ import java.util.stream.Stream;
 public class Task_7_2_12 {
     public static void main(String[] args) throws Exception {
 
-        HashMap<String, Integer> result = new HashMap<>();
+//        HashMap<String, Integer> result = new HashMap<>();
         new BufferedReader(new BufferedReader(
                 new InputStreamReader(System.in, java.nio.charset.StandardCharsets.UTF_8)))
                 .lines()
-                .flatMap(l -> Stream.of(l.split("[\\p{Punct}\\s]+")))
-                .map(String::toLowerCase)
-                .forEach(word -> {
-                    if (result.containsKey(word)) result.put(word, result.get(word) + 1);
-                    else result.put(word, 1);
-                });
-
-        result.entrySet()
+                .map(words -> words.toLowerCase().split("[^а-я|А-Я|a-z|A-Z|0-9]+"))
+                .flatMap(Arrays::stream)
+                .collect(Collectors.
+                        groupingBy(String::toString, TreeMap::new, Collectors.counting()))
+                .entrySet()
                 .stream()
-                .sorted((e1, e2) -> {
-                    if (e1.getValue().equals(e2.getValue())) {
-                        return e1.getKey().compareTo(e2.getKey());
-                    } else {
-                        return e2.getValue().compareTo(e1.getValue());
-                    }
-                })
+                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
                 .limit(10)
-                .forEach(e -> System.out.println(e.getKey()));
+                .forEach((line) -> System.out.println(line.getKey()));
+
 
     }
 
 }
+// .forEach(word -> {
+//         if (result.containsKey(word)) result.put(word, result.get(word) + 1);
+//         else result.put(word, 1);
+//         });
+//
+//         result.entrySet()
+//         .stream()
+//         .sorted((e1, e2) -> {
+//         if (e1.getValue().equals(e2.getValue())) {
+//         return e1.getKey().compareTo(e2.getKey());
+//         } else {
+//         return e2.getValue().compareTo(e1.getValue());
+//         }
+//         })
+//         .limit(10)
+//         .forEach(e -> System.out.println(e.getKey()));
